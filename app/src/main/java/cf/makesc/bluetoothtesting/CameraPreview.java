@@ -28,14 +28,17 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     private DataOutputStream out;
     long oldtime,newtime,delta;
     private static final int SERVERPORT = 56469;
-    private static final String SERVER_IP = "10.255.58.92";
+    private static final String SERVER_IP = "192.168.1.133";
     private static final int WIDTH = 320;
     private static final int HEIGHT = 240;
+    private InetAddress host;
 
-
-    public CameraPreview(Context context, Camera camera) {
+    public CameraPreview(Context context, Camera camera,InetAddress host) {
         super(context);
-
+        if(host!=null)
+        {
+            this.host = host;
+        }
         mCamera = camera;
         mHolder = getHolder();
         mHolder.addCallback(this);
@@ -48,8 +51,13 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             @Override
             public void run() {
                 try {
-                    InetAddress serverAddress = InetAddress.getByName(SERVER_IP);
-                    socket = new Socket (serverAddress, SERVERPORT);
+                    if(host==null) {
+                        InetAddress serverAddress = InetAddress.getByName(SERVER_IP);
+                        socket = new Socket(serverAddress, SERVERPORT);
+                    }
+                    else{
+                        socket=new Socket(host,SERVERPORT);
+                    }
                     out = new DataOutputStream(socket.getOutputStream());
 
                 } catch (UnknownHostException e) {
@@ -62,7 +70,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         try {
             mCamera.setPreviewDisplay(holder);
             mCamera.setPreviewCallback(this);
-            mCamera.setDisplayOrientation(90);
+            mCamera.setDisplayOrientation(0);
             mCamera.startPreview();
         } catch (IOException e) {
             e.printStackTrace();
@@ -77,7 +85,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
         try {
             mCamera.stopPreview();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         try {
             mCamera.setPreviewDisplay(holder);
